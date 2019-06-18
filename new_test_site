@@ -15,7 +15,7 @@
 # Can manually set up source code directory avoiding git clone.
 # Leon Stringer <leon@priorsvle.com>
 local_repo=/usr/share/repos/moodle
-branch=MOODLE_36_STABLE
+branch=MOODLE_37_STABLE
 upstream_repo=git://git.moodle.org/moodle.git
 tag=""
 OPTIND=1
