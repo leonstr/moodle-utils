@@ -3,8 +3,32 @@ Moodle utilities
 
 Some utilities for use with Moodle.
 
+  * `ldap_test.php`: A script to help identify and troubleshoot the settings for LDAP authentication in Moodle.
   * `moodledata_orphans.php`: List files in Moodledata `filedir` directory that aren't in the Moodle database.
   * `new_test_site`: Create a new Moodle test site.
+
+## ldap\_test.php
+A script to help identify and troubleshoot the settings for LDAP authentication in Moodle.
+
+Setting up LDAP authentication can require some trial-and-error to work out: 1) the settings needed for Moodle to connect to the LDAP server and 2) the user attributes needed to populate Moodle's user fields. In this script you specify the following constants:
+
+* `HOST_URL` -- e.g. 'ldap://ldap1.example.corp'
+* `BIND_DN` -- e.g. 'cn=ldapuser,dc=example,dc=corp'
+* `BIND_PW` -- e.g. 'yourpassword'
+* `CONTEXTS` -- e.g. 'dc=example,dc=com'
+* `FILTERS` -- e.g. '(objectClass=user)'
+* `ATTRIBUTES` -- e.g. 'uid, cn, mail'
+
+Then run the script. If the settings work the user fields from the LDAP server will be listed. If the settings don't work there should be an error message which hopefully will help identify which setting is failing. You can also see which users would be created before running the Moodle sync script.
+
+It uses the Start TLS extension. If you get an error like "Unable to start TLS" this may be because the LDAP server's certificate is not signed by a certificate authority (CA). You can either import the LDAP server's certificate to the client system (i.e. Moodle web server) or try adding `TLS_REQCERT allow` to `ldap.conf` to skip verification.
+
+Note: The LDAP page size extension is not supported so the users returned may be limited, e.g. only first 250 users may be returned depending on the LDAP server's settings.
+
+### Usage
+First edit `ldap_test.php` setting the constants listed above then run:
+
+	php -f /path/to/ldap_test.php
 
 ## moodledata\_orphans.php
 List files in Moodledata `filedir` directory that aren't in the Moodle database.
