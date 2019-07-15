@@ -95,8 +95,6 @@ if (!$info) {
 	die("Error returned by ldap_get_entries()." . PHP_EOL);
 }
 
-$record_count = 0;
-
 for ($i = 0; $i < $info['count']; $i++) {
 	foreach ($attributes as $attribute) {
 		echo "$attribute: ";
@@ -114,9 +112,8 @@ for ($i = 0; $i < $info['count']; $i++) {
 		echo PHP_EOL;
 	}
 
-	$record_count = $i;
 	echo PHP_EOL;
 }
 
-echo "$record_count items returned." . PHP_EOL;
+echo "{$info['count']} items returned." . PHP_EOL;
 ldap_close($ldapconn);
