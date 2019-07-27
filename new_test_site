@@ -45,7 +45,7 @@ key_file=/etc/pki/tls/private/$domain_name.key
 sitedir=/var/www/$domain_name
 moodle=$sitedir/moodle
 dataroot=$sitedir/moodledata
-dbname=${domain_name/./_}
+dbname=${domain_name//./_}
 dbpass=`openssl rand -base64 12`	# https://unix.stackexchange.com/a/306107
 
 if [ -e "$conf_file" ]; then
