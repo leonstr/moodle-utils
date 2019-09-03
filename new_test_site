@@ -72,6 +72,7 @@ www_user=apache
 www_service=httpd
 key_file_mode=600
 key_owner_g=root
+php_fpm_conf=/etc/php-fpm.d/www.conf
 os_id=`grep -h "^ID=" /etc/*-release | cut -d'=' -f 2`
 
 if [ "$os_id" == "debian" ]; then
@@ -86,6 +87,17 @@ if [ "$os_id" == "debian" ]; then
 else
 	log "Using file system locations for CentOS/RHEL/Fedora."
 fi
+
+if [ -f "$php_fpm_conf" ]; then		# Is there a PHP-FPM config file?
+	 # Then attempt to read the user setting.
+	fpm_user=`grep -E "^user = [^;\s]+" /etc/php-fpm.d/www.conf | sed 's/^user\s\+=\s\+//'`
+
+	if [ "$?" -eq "0" ] && [ ! -z "$fpm_user" ]; then
+		www_user=$fpm_user
+	fi
+fi
+
+log "PHP appears to be accessing files as user '$www_user'."
 
 domain_name=$1
 conf_file=$apache_conf_dir/$domain_name.conf
