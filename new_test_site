@@ -48,7 +48,14 @@ while getopts "g:b:t:h?v" opt; do
 		g) upstream_repo=$OPTARG
 			;;
 		t) tag=$OPTARG
-			branch=MOODLE_${tag:1:1}${tag:3:1}_STABLE
+			regex="v([0-9]+)\.([0-9]+)\."
+
+			if [[ $tag =~ $regex ]]; then
+				branch=MOODLE_${BASH_REMATCH[1]}${BASH_REMATCH[2]}_STABLE
+			else
+				>&2 echo "Error: Tag $tag does not match 'vX.Y.Z'."
+				exit 1
+			fi
 			;;
 		h|\?) show_help
 			exit 0
