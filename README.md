@@ -40,9 +40,22 @@ It must be run from the Moodle source code directory.
 Warning: Although the listed files can probably be deleted it is recommended that you backup these files beforehand.
 
 ### Usage:
+php /PATH/TO/moodledata\_orphans.php [-b] [-p]
 
-	cd /path/to/moodle
-	php -f /path/to/moodledata_orphans.php
+-b: Bare output. Suppresses the "Not in database: " prefix.
+
+-p: Show full path. Files are listed with the `$CFG-\>dataroot` prefix. Without -p only the relative path from `filedir` is shown.
+
+### Examples:
+Assuming Moodle source code is in `/var/www/moodle` and `moodledata_orphans.php` is in `/home/user1`:
+
+	cd /var/www/moodle
+	php /home/user1/moodledata_orphans.php
+
+With options -b and -p output is suitable for piping to a command. For example to delete the orphan files (after making a backup!):
+
+	cd /var/www/moodle
+	php /home/user1/moodledata_orphans.php -b -p | xargs rm
 
 ## new\_test\_site
 Create a new Moodle test site.
