@@ -200,8 +200,10 @@ else
 	install_args+=("--dbtype=mariadb")
 fi
 
-if [ "$branch" != "MOODLE_25_STABLE" ] && [ "$branch" != "MOODLE_26_STABLE" ] \
-				&& [ "$branch" != "MOODLE_27_STABLE" ]; then
+ # adminemail introduced in Moodle 2.9, check version is not older.
+old_versions="MOODLE_2[5-8]_STABLE"
+
+if [[ ! "$branch" =~ $old_versions ]]; then
 	install_args+=("--adminemail=admin@example.com")
 fi
 
