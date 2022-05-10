@@ -3,36 +3,38 @@
 # PHP and MySQL/MariaDB must be alread installed and configured.
 # Leon Stringer <leon@priorsvle.com>
 local_repo=/usr/share/repos/moodle
-branch=MOODLE_311_STABLE
+branch=MOODLE_400_STABLE
 upstream_repo=git://git.moodle.org/moodle.git
 tag=""
 verbose=0
 OPTIND=1
 
 function show_help () {
-	echo "Usage: new_test_site [[-b branch_ver] | [-t tag]] [-g git_repo] domain-name"
-	echo
-	echo " -b branch_ver Optional major Moodle version, e.g. 35 for Moodle 3.5."
-	echo "               If not specified $branch is used.  Minimum: 25 (for"
-	echo "               Moodle 2.5).  Cannot be used with -t."
-	echo
-	echo " -t tag        Optional Moodle minor version, e.g. v3.5.1  Cannot be"
-	echo "               used with -b."
-	echo
-	echo " -g git_repo   Optional upstream Git repository to use.  By default"
-	echo "               $upstream_repo is used.  If the source code"
-	echo "               directory is present this is used, avoiding Git clone."
-	echo
-	echo " -v            Verbose output."
-	echo
-	echo "Examples:"
-	echo "    new_test_site moodle1.example.com"
-	echo
-	echo "    new_test_site -b 35 -g https://github.com/moodle/moodle.git \\"
-	echo "    moodle2.example.com"
-	echo
-	echo "    new_test_site -t v3.6.2 moodle3.example.com"
-	echo
+	cat << EOF
+Usage: new_test_site [[-b branch_ver] | [-t tag]] [-g git_repo] domain-name
+
+ -b branch_ver Optional major Moodle version, e.g. 35 for Moodle 3.5.
+               If not specified $branch is used.  Minimum: 25 (for
+               Moodle 2.5).  Cannot be used with -t.
+
+ -t tag        Optional Moodle minor version, e.g. v3.5.1  Cannot be
+               used with -b.
+
+ -g git_repo   Optional upstream Git repository to use.  By default
+               $upstream_repo is used.  If the source code
+               directory is present this is used, avoiding Git clone.
+
+ -v            Verbose output.
+
+Examples:
+    new_test_site moodle1.example.com
+
+    new_test_site -b 35 -g https://github.com/moodle/moodle.git \\
+                moodle2.example.com"
+
+    new_test_site -t v3.6.2 moodle3.example.com
+
+EOF
 }
 
 function log () {
@@ -226,19 +228,20 @@ fi
 chmod $key_file_mode $key_file
 chown root:$key_owner_g $key_file
 
-echo "<VirtualHost *:443>" > $conf_file
+cat << EOF > $conf_file
+<VirtualHost *:443>
+    ServerName $domain_name
+    DocumentRoot $sitedir/moodle
+    SSLEngine on
+    SSLCertificateFile $cert_file
+    SSLCertificateKeyFile $key_file
+</VirtualHost>
+EOF
 
 if [ "$?" -ne "0" ]; then
 	>&2 echo "Error: Unable to create Apache config file."
 	exit 1
 fi
-
-echo "    ServerName $domain_name" >> $conf_file
-echo "    DocumentRoot $sitedir/moodle" >> $conf_file
-echo "    SSLEngine on" >> $conf_file
-echo "    SSLCertificateFile $cert_file" >> $conf_file
-echo "    SSLCertificateKeyFile $key_file" >> $conf_file
-echo "</VirtualHost>" >> $conf_file
 
 apachectl configtest > /dev/null 2>&1
 
