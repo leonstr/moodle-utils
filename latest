@@ -1,0 +1,158 @@
+#!/bin/bash
+# Upgrade a Moodle site to the latest stable version of the specified branch.
+# This script will DELETE EXISTING FILES in the Moodle source code directory.
+# Leon Stringer <leon.stringer@ntlworld.com>
+
+# Target version to upgrade to.
+branch=400
+version=4.0.1
+
+# Files that are not included in the Moodle source code download but which
+# should be kept when upgrading.
+filestokeep=(config.php php.ini)
+
+phpbin=/usr/bin/php
+moodledir=$PWD
+
+# Write param to stderr.
+function error_message () {
+	>&2 echo $1
+}
+
+# Output error message and quit.
+function fatal_error () {
+	error_message "Error: $1"
+	exit 1
+}
+
+if [ ! -f "$moodledir/config.php" ]; then
+	fatal_error "Cannot find config.php. Is this a Moodle directory?"
+fi
+
+moodledata=`$phpbin -r 'define("CLI_SCRIPT", true);require("config.php");echo $CFG->dataroot;'`
+
+# Temporary directory the contents of the Moodle source code directory will be
+# moved to.
+workingdir=$(mktemp -d "$HOME/moodle.XXXXXXXXXX")
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to create temporary directory."
+fi
+
+# Get a list of additional (non-core) plugins.
+extpluginscript=$(mktemp "$workingdir/XXXXXXXXXX.php")
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to create temporary file for PHP script."
+fi
+
+# Create a script to report the additional plugins.
+cat << 'EOF' > $extpluginscript
+<?php
+define('CLI_SCRIPT', true);
+require('config.php');
+
+$pluginman = core_plugin_manager::instance();
+
+foreach ($pluginman->get_plugins() as $type => $plugins) {
+    foreach ($plugins as $shortname => $plugin) {
+        if ($plugin->source == core_plugin_manager::PLUGIN_SOURCE_EXTENSION) {
+            echo "{$plugin->rootdir}" . PHP_EOL;
+        }
+    }
+}
+EOF
+
+extplugindirs=$(mktemp "$workingdir/plugins.XXXXXXXXXX")
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to create temporary file for plugin list."
+fi
+
+# Run the script writing a list of directories containing additional plugins
+# to file $extplugindirs.
+$phpbin $extpluginscript > $extplugindirs
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to create temporary file for plugin list."
+fi
+
+# Download the target Moodle version's source code.
+# There doesn't appear to be a static URL which always points to the latest
+# stable version.
+#downloadurl=https://download.moodle.org/download.php/direct/stable${branch}/moodle-latest-${version}.tgz
+downloadurl=https://download.moodle.org/download.php/direct/stable${branch}/moodle-${version}.tgz
+
+tarball=$(mktemp "$workingdir/download.XXXXXXXXXX")
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to create temporary file for download."
+fi
+
+wget -O "$tarball" $downloadurl
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to download Moodle."
+fi
+
+# Move existing Moodle version's source code files to temporary directory.
+mv "$moodledir"/* "$workingdir"
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to move source code to temporary directory $workingdir."
+fi
+
+# Extract target version's source code into Moodle directory.
+tar -C "$moodledir" --strip-components=1 -xzf "$tarball"
+
+if [ "$?" -ne "0" ]; then
+	fatal_error "Failed to extract $tarball into $moodledir."
+fi
+
+successful=true
+
+# For files that must be kept, such as config.php, move these back from the
+# temporary directory into Moodle directory.
+for file in ${filestokeep[@]}; do
+	if [ -f "$workingdir/$file" ]; then
+		mv "$workingdir/$file" "$moodledir"
+
+		if [ "$?" -ne "0" ]; then
+			error "Failed to move $workingdir/$file to $moodledir"
+			successful=false
+		fi
+	fi
+done
+
+# Move any external/additional plugins from the temporary directory back to
+# the Moodle directory.
+while read -r line; do
+	# If the plugin dir is in the Moodle dir (it should always be).
+	if [[ "$line" == "$moodledir"* ]]; then
+		plugindir=${line:${#moodledir}}
+		mv ${workingdir}${plugindir} ${moodledir}${plugindir}
+
+		if [ "$?" -ne "0" ]; then
+			error "Failed to move ${workingdir}${plugindir} to ${moodledir}${plugindir}"
+			successful=false
+		fi
+	fi
+done < $extplugindirs
+
+# Is moodledata a subdirectory in the source code directory?  If necessary
+# move it back to its original location.
+if [[ "$moodledata" == "$moodledir"/* ]]; then
+	moodledata=${moodledata:${#moodledir}}
+
+	# Check if moodledata directory actually got moved.  If it's hidden
+	# (and it should be) then it won't have been moved.
+	if [ -d "$workingdir/$moodledata" ]; then
+		mv "$workingdir/$moodledata" "$moodledir"
+	fi
+fi
+
+if ! $success; then
+	fatal_error "Completed with errors. Leaving behind temporary directory $workingdir."
+else
+	rm -rf "$workingdir"
+fi

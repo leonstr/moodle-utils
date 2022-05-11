@@ -3,9 +3,17 @@ Moodle utilities
 
 Some utilities for use with Moodle.
 
+  * `latest`: A Bash script to replace the existing Moodle source code with the latest version while retaining any additional (non-core) plugins.
   * `ldap_test.php`: A script to help identify and troubleshoot the settings for LDAP authentication in Moodle.
   * `moodledata_orphans.php`: List files in Moodledata `filedir` directory that aren't in the Moodle database.
   * `new_test_site`: Create a new Moodle test site.
+
+## latest
+Warning: This script will delete the files and directories in the Moodle source code directory and replace it with the latest source code.
+
+A script to replace the current version of Moodle in your site's source code directory with the latest files but keeps any additional (non-core) plugins. If you have added any files or directories to the Moodle source code directory they will be deleted by this script.
+
+This script was written as a proof-of-concept to show how the Moodle source code directory can be correctly prepared -- notably ensuring all files and directories from the previous Moodle version are removed but retaining any additional plugins -- as an example to anyone writing their own packaging system.
 
 ## ldap\_test.php
 A script to help identify and troubleshoot the settings for LDAP authentication in Moodle.
