@@ -6,6 +6,7 @@
 # Target version to upgrade to.
 branch=400
 version=4.0.1
+requiresversion=3.6
 
 # Files that are not included in the Moodle source code download but which
 # should be kept when upgrading.
@@ -29,6 +30,15 @@ if [ ! -f "$moodledir/config.php" ]; then
 	fatal_error "Cannot find config.php. Is this a Moodle directory?"
 fi
 
+# Check existing Moodle version meets the minimum version that can be
+# upgraded to the target version.
+versioncheck=`php -r "define('CLI_SCRIPT', true);require('config.php');echo version_compare(\\$CFG->release, '$requiresversion');"`
+
+if [ $versioncheck == -1 ]; then
+	fatal_error "Existing Moodle version is older than $requiresversion."
+fi
+
+# Get the Moodledata location (in case this in the source code directory).
 moodledata=`$phpbin -r 'define("CLI_SCRIPT", true);require("config.php");echo $CFG->dataroot;'`
 
 # Temporary directory the contents of the Moodle source code directory will be
@@ -80,8 +90,8 @@ fi
 # Download the target Moodle version's source code.
 # There doesn't appear to be a static URL which always points to the latest
 # stable version.
-#downloadurl=https://download.moodle.org/download.php/direct/stable${branch}/moodle-latest-${version}.tgz
-downloadurl=https://download.moodle.org/download.php/direct/stable${branch}/moodle-${version}.tgz
+downloadurl=https://download.moodle.org/download.php/direct/stable${branch}/moodle-latest-${branch}.tgz
+#downloadurl=https://download.moodle.org/download.php/direct/stable${branch}/moodle-${version}.tgz
 
 tarball=$(mktemp "$workingdir/download.XXXXXXXXXX")
 
