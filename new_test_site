@@ -43,6 +43,18 @@ function log () {
     fi
 }
 
+function dbtype () {
+    local dbname=$1
+    local dbpass=$2
+    dbversion=`mysql -u $dbname -p$dbpass -BN --execute="SELECT VERSION()" 2> /dev/null`
+
+    if [[ $dbversion == *"MariaDB" ]]; then
+        dbtype="mariadb"
+    else
+        dbtype="mysqli"
+    fi
+}
+
 while getopts "g:b:t:h?v" opt; do
 	case "$opt" in
 		b) branch=MOODLE_${OPTARG}_STABLE
@@ -195,12 +207,15 @@ fi
 
 install_args=("--wwwroot=https://$domain_name" "--dbname=$dbname" "--dbuser=$dbname" "--dbpass=$dbpass" "--fullname=Test Site" "--shortname=Home" "--adminpass=Password-1" "--agree-license" "--non-interactive" "--lang=$lang")
 
+# Initialise $dbtype to mariadb or mysqli as required
+dbtype $dbname $dbpass
+
  # dbtype mariadb introduced with Moodle 2.6
 if [ "$branch" == "MOODLE_25_STABLE" ]; then
-	install_args+=("--dbtype=mysqli")
-else
-	install_args+=("--dbtype=mariadb")
+	dbtype="mysqli"
 fi
+
+install_args+=("--dbtype=$dbtype")
 
  # adminemail introduced in Moodle 2.9, check version is not older.
 old_versions="MOODLE_2[5-8]_STABLE"
