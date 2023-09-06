@@ -30,7 +30,7 @@ Examples:
     new_test_site moodle1.example.com
 
     new_test_site -b 35 -g https://github.com/moodle/moodle.git \\
-                moodle2.example.com"
+                moodle2.example.com
 
     new_test_site -t v3.6.2 moodle3.example.com
 
