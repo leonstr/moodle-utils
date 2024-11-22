@@ -3,7 +3,7 @@
 # PHP and MySQL/MariaDB must be alread installed and configured.
 # Leon Stringer <leon@priorsvle.com>
 local_repo=/usr/share/repos/moodle
-branch=MOODLE_404_STABLE
+branch=MOODLE_405_STABLE
 upstream_repo=git://git.moodle.org/moodle.git
 tag=""
 verbose=0
