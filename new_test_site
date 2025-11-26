@@ -3,7 +3,7 @@
 # PHP and MySQL/MariaDB must be alread installed and configured.
 # Leon Stringer <leon@priorsvle.com>
 local_repo=/usr/share/repos/moodle
-branch=MOODLE_405_STABLE
+branch=MOODLE_501_STABLE
 upstream_repo=git://git.moodle.org/moodle.git
 tag=""
 verbose=0
@@ -255,10 +255,16 @@ fi
 chmod $key_file_mode $key_file
 chown root:$key_owner_g $key_file
 
+if [ "$branch" == "MOODLE_501_STABLE" ]; then
+    documentroot=$sitedir/moodle/public
+else
+    documentroot=$sitedir/moodle
+fi
+
 cat << EOF > $conf_file
 <VirtualHost *:443>
     ServerName $domain_name
-    DocumentRoot $sitedir/moodle
+    DocumentRoot $documentroot
     SSLEngine on
     SSLCertificateFile $cert_file
     SSLCertificateKeyFile $key_file
