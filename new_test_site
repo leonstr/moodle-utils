@@ -3,7 +3,7 @@
 # PHP and MySQL/MariaDB must be alread installed and configured.
 # Leon Stringer <leon@priorsvle.com>
 local_repo=/usr/share/repos/moodle
-branch=MOODLE_501_STABLE
+branch=MOODLE_502_STABLE
 upstream_repo=git://git.moodle.org/moodle.git
 tag=""
 verbose=0
@@ -245,6 +245,13 @@ fi
 rm -f $installoutput
 chown $www_user $sitedir/moodle/config.php
 
+# Moodle 4.5 added the router.
+regex="MOODLE_50._STABLE"
+if [[ $branch =~ $regex || $branch == "MOODLE_405_STABLE" ]]; then
+    sed -i -e '/require_once/i \
+$CFG->routerconfigured = true;' $sitedir/moodle/config.php
+fi
+
 openssl req -x509 -newkey rsa:4096 -keyout $key_file -out $cert_file -days 720 -nodes -subj "/CN=$domain_name" > /dev/null
 
 if [ "$?" -ne "0" ]; then
@@ -255,7 +262,9 @@ fi
 chmod $key_file_mode $key_file
 chown root:$key_owner_g $key_file
 
-if [ "$branch" == "MOODLE_501_STABLE" ]; then
+# Moodle 5.1 added the 'public' directory.
+regex="MOODLE_50[12]_STABLE"
+if [[ $branch =~ $regex ]]; then
     documentroot=$sitedir/moodle/public
 else
     documentroot=$sitedir/moodle
@@ -274,6 +283,19 @@ EOF
 if [ "$?" -ne "0" ]; then
 	>&2 echo "Error: Unable to create Apache config file."
 	exit 1
+fi
+
+# Moodle 4.5 added the router.
+regex="MOODLE_50._STABLE"
+if [[ $branch =~ $regex || $branch == "MOODLE_405_STABLE" ]]; then
+    cat << EOF >> $conf_file
+<Directory $documentroot>
+    AllowOverride None
+    Require all granted
+    DirectoryIndex index.php
+    FallbackResource /r.php
+</Directory>
+EOF
 fi
 
 apachectl configtest > /dev/null 2>&1
